@@ -1,0 +1,5 @@
+{
+  "name": "Trip Sutra",
+  "description": "A professional travel platform for discovering and suggesting hidden local gems, heritage sites, and stays.",
+  "requestFramePermissions": ["geolocation"]
+}

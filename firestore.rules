@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.token.email == "priyeshkathe@gmail.com");
+    }
+
+    function isValidSuggestion(data) {
+      return data.place_name is string && data.place_name.size() > 0 && data.place_name.size() < 200 &&
+             data.category in ["Temple", "Monument", "Restaurant", "Hotel", "Tourist Attraction", "Other"] &&
+             data.latitude is number && data.longitude is number &&
+             data.status == "pending";
+    }
+
+    match /place_suggestions/{suggestionId} {
+      // Anyone can create a suggestion
+      allow create: if isValidSuggestion(request.resource.data);
+      
+      // Only admins can read, update, or delete suggestions
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /approved_places/{placeId} {
+      // Anyone can read approved places
+      allow read: if true;
+      
+      // Only admins can create, update, or delete approved places
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}
